@@ -31,6 +31,9 @@ set tags=./tags,tags;
 :set mouse=a
 :set modifiable
 
+" use system clipboard
+set clipboard=unnamedplus
+set clipboard=unnamed
 
 let &t_SI = "\<Esc>]50;CursorShape=1\x7"
 let &t_SR = "\<Esc>]50;CursorShape=2\x7"
@@ -86,8 +89,10 @@ nnoremap <silent> <Leader>h/ :History/<CR>
 
 call plug#begin('$HOME/.config/nvim/plugged')
 
-Plug 'stevearc/aerial.nvim' " file outline window
+Plug 'Yggdroot/indentLine'
 
+Plug 'stevearc/aerial.nvim' " file outline window
+Plug 'lewis6991/gitsigns.nvim' " gitsigns to see git commit history
 Plug 'http://github.com/tpope/vim-surround' " Surrounding ysw)
 Plug 'https://github.com/preservim/nerdtree' " NerdTree
 Plug 'Xuyuanp/nerdtree-git-plugin'
@@ -96,7 +101,9 @@ Plug 'Xuyuanp/nerdtree-git-plugin'
 Plug 'projekt0n/github-nvim-theme'
 " Markdown preview
 Plug 'iamcco/markdown-preview.nvim', { 'do': 'cd app && yarn install' }
-
+" calltree
+Plug 'ldelossa/litee.nvim'
+Plug 'ldelossa/litee-calltree.nvim'	
 " Treesitter
 Plug 'nvim-treesitter/nvim-treesitter'
 Plug 'nvim-treesitter/playground'
@@ -195,6 +202,24 @@ let g:NERDTreeGitStatusIndicatorMapCustom = {
 " ===
 let b:ale_linters = ['pylint']
 let b:ale_fixers = ['autopep8', 'yapf']
+
+" ===
+" === calltree
+" ===
+" lua << EOF
+" -- configure the litee.nvim library 
+" require('litee.lib').setup({})
+" -- configure litee-calltree.nvim
+" require('litee.calltree').setup({})
+
+" vim.lsp.handlers['callHierarchy/incomingCalls'] = vim.lsp.with(
+"             require('litee.lsp.handlers').ch_lsp_handler("from"), {}
+" )
+" vim.lsp.handlers['callHierarchy/outgoingCalls'] = vim.lsp.with(
+"             require('litee.lsp.handlers').ch_lsp_handler("to"), {}
+" )
+
+" EOF
 
 
 " ===
@@ -503,6 +528,52 @@ EOF
 
 nnoremap <C-s> :AerialToggle<CR>
 
+" ===
+" === gitsigns
+" ===
+lua << EOF
+require('gitsigns').setup {
+  signs = {
+    add          = {hl = 'GitSignsAdd'   , text = '│', numhl='GitSignsAddNr'   , linehl='GitSignsAddLn'},
+    change       = {hl = 'GitSignsChange', text = '│', numhl='GitSignsChangeNr', linehl='GitSignsChangeLn'},
+    delete       = {hl = 'GitSignsDelete', text = '_', numhl='GitSignsDeleteNr', linehl='GitSignsDeleteLn'},
+    topdelete    = {hl = 'GitSignsDelete', text = '‾', numhl='GitSignsDeleteNr', linehl='GitSignsDeleteLn'},
+    changedelete = {hl = 'GitSignsChange', text = '~', numhl='GitSignsChangeNr', linehl='GitSignsChangeLn'},
+  },
+  signcolumn = true,  -- Toggle with `:Gitsigns toggle_signs`
+  numhl      = false, -- Toggle with `:Gitsigns toggle_numhl`
+  linehl     = false, -- Toggle with `:Gitsigns toggle_linehl`
+  word_diff  = false, -- Toggle with `:Gitsigns toggle_word_diff`
+  watch_gitdir = {
+    interval = 1000,
+    follow_files = true
+  },
+  attach_to_untracked = true,
+  current_line_blame = false, -- Toggle with `:Gitsigns toggle_current_line_blame`
+  current_line_blame_opts = {
+    virt_text = true,
+    virt_text_pos = 'eol', -- 'eol' | 'overlay' | 'right_align'
+    delay = 1000,
+    ignore_whitespace = false,
+  },
+  current_line_blame_formatter = '<author>, <author_time:%Y-%m-%d> - <summary>',
+  sign_priority = 6,
+  update_debounce = 100,
+  status_formatter = nil, -- Use default
+  max_file_length = 40000,
+  preview_config = {
+    -- Options passed to nvim_open_win
+    border = 'single',
+    style = 'minimal',
+    relative = 'cursor',
+    row = 0,
+    col = 1
+  },
+  yadm = {
+    enable = false
+  },
+}
+EOF
 
 " ===
 " === Tagbar
@@ -517,5 +588,8 @@ let g:airline_right_alt_sep = ''
 let g:airline_symbols.branch = ''
 let g:airline_symbols.readonly = ''
 let g:airline_symbols.linenr = ''
+
+" ref https://stackoverflow.com/questions/25344452/vim-python-navigate-to-imported-files
+nnoremap <C-k> :!ctags -aR /usr/lib/python*/site-packages/<cword><cr>
 
 inoremap <expr> <Tab> pumvisible() ? coc#_select_confirm() : "<Tab>"
